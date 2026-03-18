@@ -385,11 +385,12 @@ void main()
 	vec3 gradient = vec3(0.0);
 	float noise = getNoiseForLayerGroup(group, x, y, z, gradient) + fade;
 	float storminess = clamp(group.Storminess + fade * 0.1, 0.0, 1.0);
-	float brightness = clamp(1.0 - storminess * (1.0 - clamp((y - group.StormStart) / group.StormFadeDistance, 0.0, 1.0)), 0.0, 1.0);
+	float stormFade = 1.0 - clamp((y - group.StormStart) / group.StormFadeDistance, 0.0, 1.0);
+	float brightness = clamp(1.0 - storminess * 0.54 * stormFade, 0.36, 1.0);
 #if STYLE == 1
 	gradient = normalize(gradient);
 	float strength = dot(gradient, SHADE_DIRECTION) * 0.5 + 0.5;
-	brightness = clamp(brightness - strength * 0.1, 0.0, 1.0);
+	brightness = clamp(brightness - strength * 0.06, 0.34, 1.0);
 #endif
     if (noise > 0.0)
     {

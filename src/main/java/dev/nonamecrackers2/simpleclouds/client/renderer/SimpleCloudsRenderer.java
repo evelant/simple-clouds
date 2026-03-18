@@ -973,12 +973,17 @@ public class SimpleCloudsRenderer implements ResourceManagerReloadListener
 	public float[] getCloudColor(float partialTick)
 	{
 		Vec3 cloudCol = this.mc.level.getCloudColor(partialTick);
-		float factor = this.worldEffectsManager.getDarkenFactor(partialTick, 0.8F);
+		float storminess = this.worldEffectsManager.getStorminessSmoothed(partialTick);
+		float factor = this.worldEffectsManager.getDarkenFactor(partialTick, 0.28F);
+		float cloudDim = Mth.lerp(storminess, 1.0F, factor);
+		cloudDim = Mth.clamp(cloudDim + storminess * 0.04F, 0.0F, 1.0F);
 		float skyFlashFactor = Math.max(0.0F, ((float)this.mc.level.getSkyFlashTime() - partialTick) * SimpleCloudsConstants.LIGHTNING_FLASH_STRENGTH);
-		factor += skyFlashFactor;
-		float r = Mth.clamp((float)cloudCol.x * factor, 0.0F, 1.0F);
-		float g = Mth.clamp((float)cloudCol.y * factor, 0.0F, 1.0F);
-		float b = Mth.clamp((float)cloudCol.z * factor, 0.0F, 1.0F);
+		cloudDim += skyFlashFactor;
+		float floorMix = Mth.clamp((storminess - 0.18F) / 0.60F, 0.0F, 1.0F);
+		floorMix = floorMix * floorMix * (3.0F - 2.0F * floorMix);
+		float r = Mth.clamp(Mth.lerp(floorMix, (float)cloudCol.x * cloudDim, Math.max((float)cloudCol.x * cloudDim, 0.40F)), 0.0F, 1.0F);
+		float g = Mth.clamp(Mth.lerp(floorMix, (float)cloudCol.y * cloudDim, Math.max((float)cloudCol.y * cloudDim, 0.42F)), 0.0F, 1.0F);
+		float b = Mth.clamp(Mth.lerp(floorMix, (float)cloudCol.z * cloudDim, Math.max((float)cloudCol.z * cloudDim, 0.48F)), 0.0F, 1.0F);
 		return new float[] { r, g, b };
 	}
 	

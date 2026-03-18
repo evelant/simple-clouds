@@ -170,7 +170,6 @@ void main()
 	float sceneEdge = getSceneEdgeMask(texCoord);
 	float horizonMask = 1.0 - smoothstep(0.08, 0.24, abs(rayDir.y));
 	float rayDepth = distance(point, CameraPos);
-	float transmittenceDistance = max(LightTransmittenceDistance, 1.0);
 	
 	float density = 0.0;
 	vec3 colorAccum = vec3(0.0);
@@ -191,9 +190,7 @@ void main()
     	//and set the final color
     	if (col.a > 0.0 && col.r <= ColorThreshold.r && col.g <= ColorThreshold.g && col.b <= ColorThreshold.b)
     	{
-    		float distanceFade = smoothstep(transmittenceDistance * 0.22, transmittenceDistance * 0.95, rayDepth);
-    		float nearDensity = mix(1.18, 0.34, distanceFade);
-    		float densityAdd = rayDepth * 0.0001 * nearDensity;
+            float densityAdd = rayDepth * 0.00008;
     		
     		float fadeFactor = 1.0;
     		
@@ -201,17 +198,15 @@ void main()
 			if (rayDepth > FogStart)
 				fadeFactor = 1.0 - min(pow((rayDepth - FogStart) / (FogEnd - FogStart), 0.05), 1.0);
 				
-			// Vertical fade to prevent the storm fog from stretching down too far
+            // Vertical fade to prevent the storm fog from stretching down too far
     		fadeFactor *= clamp(1.0 + point.y / VerticalFade, 0.0, 1.0);
 			float silhouetteMask = sceneEdge * mix(0.82, 1.0, horizonMask);
-			fadeFactor *= mix(1.0, 0.18, silhouetteMask);
+			fadeFactor *= mix(1.0, 0.05, silhouetteMask);
     		
     		density += densityAdd * fadeFactor;
     		
     		fogSteps += 1.0;
-			vec3 distanceTint = mix(vec3(1.0), vec3(0.54, 0.57, 0.66), distanceFade);
-			float colorFade = mix(1.0, 0.34, distanceFade);
-			colorAccum += vec3(col.rgb * ColorMultiplier * ColorModulator.rgb) * distanceTint * colorFade;
+			colorAccum += vec3(col.rgb * ColorMultiplier * ColorModulator.rgb);
     	}
     	
     	if (density >= 1.0)
@@ -227,11 +222,8 @@ void main()
     vec3 avgCol = colorAccum / fogSteps;
     vec4 finalCol = vec4(avgCol, min(density, 1.0));
     float silhouetteMask = sceneEdge * mix(0.82, 1.0, horizonMask);
-    finalCol.a *= mix(1.0, 0.10, silhouetteMask);
-    finalCol.rgb *= mix(1.0, 0.55, silhouetteMask);
-    float sceneDistanceFade = smoothstep(transmittenceDistance * 0.28, transmittenceDistance * 1.10, sceneDepth);
-    finalCol.a *= mix(1.06, 0.72, sceneDistanceFade);
-    finalCol.rgb *= mix(vec3(1.0), vec3(0.66, 0.69, 0.78), sceneDistanceFade);
+    finalCol.a *= mix(1.0, 0.03, silhouetteMask);
+    finalCol.rgb *= mix(1.0, 0.45, silhouetteMask);
     
     // This is technically not correct but looks ok
     float lightningMul = getNearestLightningBoltColorModifier(point);
